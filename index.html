@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Professional Task Management</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="css/all.min.css" >
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-layer-group"></i>
+                <h2>TaskFlow</h2>
+            </div>
+
+            <ul class="menu">
+                <li onclick="showView('dashboard')" class="active-menu">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </li>
+                <li onclick="showView('tasks')">
+                    <i class="fa-solid fa-list-check"></i> Tasks
+                </li>
+                <li onclick="showView('calendar')">
+                    <i class="fa-solid fa-calendar"></i> Calendar
+                </li>
+                <li onclick="showView('settings')">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </li>
+            </ul>
+        </aside>
+
+        <!-- ================= MAIN ================= -->
+        <main class="main">
+
+            <!-- TOP BAR -->
+            <header class="topbar">
+                <div class="search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" onkeyup="filterTasks()" placeholder="Search tasks...">
+                </div>
+
+                <div class="top-actions">
+                    <button id="darkModeToggle" onclick="toggleDarkMode()" class="theme-btn">
+                        <i class="fa-solid fa-moon"></i> Dark Mode
+                    </button>
+
+                    <!-- التعديل 5: Notification Badge المحترف والوهمي -->
+                   
+
+                    <div class="avatar" id="userAvatar">R</div>
+                </div>
+            </header>
+
+            <!-- ================= DASHBOARD ================= -->
+            <section id="dashboard" class="view active">
+                <h1>Dashboard Analytics</h1>
+                <div class="cards">
+                    <div class="card"><i class="fa-solid fa-list"></i>
+                        <div>
+                            <h3 id="totalCount">0</h3>
+                            <p>Total Tasks</p>
+                        </div>
+                    </div>
+                    <div class="card"><i class="fa-solid fa-check"></i>
+                        <div>
+                            <h3 id="completedCount">0</h3>
+                            <p>Completed</p>
+                        </div>
+                    </div>
+                    <div class="card"><i class="fa-solid fa-spinner"></i>
+                        <div>
+                            <h3 id="progressCount">0</h3>
+                            <p>In Progress</p>
+                        </div>
+                    </div>
+                    <div class="card"><i class="fa-solid fa-clock"></i>
+                        <div>
+                            <h3 id="pendingCount">0</h3>
+                            <p>Pending</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- قسم الرسم البياني -->
+                    <div class="chart-container">
+                        <h3>Task Distribution Analytics</h3>
+                        <canvas id="taskChart" width="400" height="150"></canvas>
+                    </div>
+
+                    <!-- التعديل 6: إضافة قسم Recent Tasks لإحياء الداشبورد -->
+                    <div class="recent-tasks-container">
+                        <h3>Recent Activities</h3>
+                        <ul id="recentTasksList" class="recent-list">
+                            <!-- سيتم حقن آخر 3 مهام مضافة هنا برمجياً -->
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= MODAL ================= -->
+            <div id="taskModal" class="modal">
+                <div class="modal-content">
+                    <h3 id="modalTitle">Add New Task</h3>
+                    <input type="hidden" id="editTaskId">
+                    <input type="text" id="taskInput" placeholder="Task title...">
+                    <textarea id="descInput" placeholder="Task description..." rows="3"></textarea>
+
+                    <div class="form-row">
+                        <div class="form-cell">
+                            <label>Priority</label>
+                            <select id="priorityInput">
+                                <option value="High">🔴 High</option>
+                                <option value="Medium">🟡 Medium</option>
+                                <option value="Low">🟢 Low</option>
+                            </select>
+                        </div>
+                        <div class="form-cell">
+                            <label>Due Date</label>
+                            <input type="date" id="dateInput">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-cell" style="width: 100%;">
+                            <label>Status</label>
+                            <select id="statusInput">
+                                <option value="todo">To Do</option>
+                                <option value="inprogress">In Progress</option>
+                                <option value="done">Done</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-btns">
+                        <button onclick="closeModal()">Cancel</button>
+                        <button onclick="saveTask()" class="add-btn" id="saveTaskBtn">Save Task</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TASKS ================= -->
+            <section id="tasks" class="view">
+                <div class="tasks-header">
+                    <div>
+                        <h1>Project Board</h1>
+                        <!-- التعديل 6: إضافة وصف بسيط فوق الـ Board يفهمه الدكتور -->
+                        <p class="project-desc">Manage your project tasks efficiently using drag & drop workflow.</p>
+                    </div>
+                    <button class="add-btn" onclick="openModal()">
+                        <i class="fa-solid fa-plus"></i> Add Task
+                    </button>
+                </div>
+
+                <div class="board">
+                    <div class="column" id="col-todo" ondragover="allowDrop(event)" ondrop="drop(event, 'todo')">
+                        <h3 class="col-title"><i class="fa-solid fa-circle" style="color: #64748b;"></i> To Do <span
+                                class="counter" id="todo-count">(0)</span></h3>
+                        <div class="tasks-holder"></div>
+                    </div>
+
+                    <div class="column" id="col-inprogress" ondragover="allowDrop(event)"
+                        ondrop="drop(event, 'inprogress')">
+                        <h3 class="col-title"><i class="fa-solid fa-spinner" style="color: #3b82f6;"></i> In Progress
+                            <span class="counter" id="inprogress-count">(0)</span></h3>
+                        <div class="tasks-holder"></div>
+                    </div>
+
+                    <div class="column" id="col-done" ondragover="allowDrop(event)" ondrop="drop(event, 'done')">
+                        <h3 class="col-title"><i class="fa-solid fa-check" style="color: #22c55e;"></i> Done <span
+                                class="counter" id="done-count">(0)</span></h3>
+                        <div class="tasks-holder"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= CALENDAR ================= -->
+            <section id="calendar" class="view">
+                <h1>Calendar View</h1>
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <h2 id="calendarMonthYear"></h2>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="day-name">Sun</div>
+                        <div class="day-name">Mon</div>
+                        <div class="day-name">Tue</div>
+                        <div class="day-name">Wed</div>
+                        <div class="day-name">Thu</div>
+                        <div class="day-name">Fri</div>
+                        <div class="day-name">Sat</div>
+                        <div id="calendarDays" class="calendar-days-grid"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SETTINGS ================= -->
+            <section id="settings" class="view">
+                <h1>Profile Settings</h1>
+                <div class="settings-container">
+                    <div class="settings-card">
+                        <h3>Profile Info</h3>
+                        <!-- التعديل 2: ربط الحقول بالقراءة والحفظ من التخزين المحلي -->
+                        <div class="form-group"><label>Full Name</label><input type="text" id="profileName"></div>
+                        <div class="form-group"><label>Email Address</label><input type="email" id="profileEmail"></div>
+                        <button class="add-btn" onclick="saveSettings()">Save Profile</button>
+                    </div>
+                </div>
+            </section>
+
+            <footer>
+                Developed by Razan Ali © 2026
+            </footer>
+
+        </main>
+    </div>
+
+    <script src="js/main.js" defer></script>
+</body>
+
+</html>
